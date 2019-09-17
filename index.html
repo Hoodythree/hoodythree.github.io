@@ -215,6 +215,137 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/15/为Django项目创建数据库并建立模型/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Hoodythree">
+      <meta itemprop="description" content="Less is more.">
+      <meta itemprop="image" content="/images/custom_img/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hoodythree">
+    </span>
+      <header class="post-header">
+
+        
+          <h1 class="post-title" itemprop="name headline">
+              
+              <a href="/2019/09/15/为Django项目创建数据库并建立模型/" class="post-title-link" itemprop="url">为Django项目创建数据库并建立模型</a>
+            
+          </h1>
+        
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2019-09-15 21:25:00" itemprop="dateCreated datePublished" datetime="2019-09-15T21:25:00+08:00">2019-09-15</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-09-17 20:53:36" itemprop="dateModified" datetime="2019-09-17T20:53:36+08:00">2019-09-17</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+            <h3 id="1-数据库配置"><a href="#1-数据库配置" class="headerlink" title="1. 数据库配置"></a>1. 数据库配置</h3><ol>
+<li><p>打开MyProject中同名App下的settings.py文件.默认情况下,配置使用Django自带的SQLite数据库,配置如下:  </p>
+<pre><code>DATABASES = {
+  &apos;default&apos;: {
+      &apos;ENGINE&apos;: &apos;django.db.backends.sqlite3&apos;,
+      &apos;NAME&apos;: os.path.join(BASE_DIR, &apos;db.sqlite3&apos;),
+  }
+}</code></pre><p>如果你需要使用其他的数据库,则需要修改<code>DATABASES</code>中的以下字段: </p>
+<pre><code>ENGINE--可选有&apos;django.db.backends.mysql&apos;或&apos;django.db.backends.oracle&apos;等其它可用后端
+NAME--数据库的名字</code></pre><p>如果你没有使用默认的SQLite数据库,则还需要配置<code>USER</code> <code>PASSWORD</code>和<code>HOST</code>  </p>
+<p>此外,关注一下文件头部的<code>INSTALLED_APPS</code>选项,这里包括了你会在Project中使用的Django应用.应用可以被多个Project使用,你也可以打包他们供别人使用.  </p>
+<p>通常， INSTALLED_APPS 默认包括了以下 Django 的自带应用：</p>
+<pre><code>django.contrib.admin -- 管理员站点， 你很快就会使用它。
+django.contrib.auth -- 认证授权系统。
+django.contrib.contenttypes -- 内容类型框架。
+django.contrib.sessions -- 会话框架。
+django.contrib.messages -- 消息框架。
+django.contrib.staticfiles -- 管理静态文件的框架。  </code></pre><p>默认开启的某些应用需要至少一个数据表，所以，在使用他们之前需要在数据库中创建一些表。需要执行以下命令：</p>
+<pre><code>py manage.py migrate</code></pre><p>这个<code>migrate</code>命令检查<code>INSTALLED_APPS</code>设置，为其中的每个应用创建需要的数据表，至于具体会创建什么，这取决于你的<code>mysite/settings.py</code> 设置文件和每个应用的数据库迁移文件</p>
+</li>
+<li><p>创建models<br>MVC是Web开发中常用的一种设计模式.其中的M即是model,它以类的形式对数据库中的表进行映射,官网教程中给出了这样一个例子:</p>
+<pre><code>from django.db import models
+
+class Question(models.Model):
+    question_text = models.CharField(max_length=200)
+    pub_date = models.DateTimeField(&apos;date published&apos;)
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    choice_text = models.CharField(max_length=200)
+    votes = models.IntegerField(default=0)</code></pre><p>代码非常直白,对每个表的属性和表与表之间的关系进行了定义.</p>
+</li>
+<li><p>激活models<br>接下来我们需要对定义的模型进行激活.<br>首先,需要将应用加入到我们的项目之中,具体做法是在配置类<code>INSTALLED_APPS</code>中添加设置:</p>
+<pre><code>&apos;polls.apps.PollsConfig&apos;</code></pre><p>然后,运行以下命令:</p>
+<pre><code>...\&gt; py manage.py makemigrations polls  </code></pre><p>通过运行 makemigrations 命令，Django 会检测你对模型文件的修改（在这种情况下，你已经取得了新的），并且把修改的部分储存为一次迁移.   </p>
+<p> 迁移是非常强大的功能，它能让你在开发过程中持续的改变数据库结构而不需要重新删除和创建表 - 它专注于使数据库平滑升级而不会丢失数据。我们会在后面的教程中更加深入的学习这部分内容，现在，你只需要记住，改变模型需要这三步:    </p>
+<ul>
+<li>编辑 models.py 文件，改变模型</li>
+<li>运行 python manage.py makemigrations 为模型的改变生成迁移文件</li>
+<li>运行 python manage.py migrate 来应用数据库迁移</li>
+</ul>
+</li>
+<li><p>初试API</p>
+</li>
+</ol>
+
+          
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+      
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/14/Django学习-1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -258,7 +389,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-09-15 21:18:30" itemprop="dateModified" datetime="2019-09-15T21:18:30+08:00">2019-09-15</time>
+                <time title="修改时间：2019-09-17 20:17:31" itemprop="dateModified" datetime="2019-09-17T20:17:31+08:00">2019-09-17</time>
               </span>
             
           
@@ -295,7 +426,8 @@
 vittualenvwrapper:简化virtualenv的使用</code></pre><p>step3. Install Django  </p>
 <pre><code>pip install django  </code></pre></blockquote>
 </li>
-<li><p>Pycharm搭建第一个Diango应用<br>使用Pycharm可以直接创建一个Django应用,目录结构如下:</p>
+<li><p>Pycharm搭建第一个Diango项目<br>有两种方法创建一个Django应用,一是在创建Django项目的同时创建一个Django应用,二是通过在Terminal中输入以下命令:</p>
+<pre><code>py manage.py startapp appname </code></pre><p>Django应用的目录结构如下:</p>
 <pre><code>+yourApp/
     + migrations/
         __init__.py
@@ -497,7 +629,7 @@ urlpatterns = [
         
           <a href="/archives">
         
-          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-count">3</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
